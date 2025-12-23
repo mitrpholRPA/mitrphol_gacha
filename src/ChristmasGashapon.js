@@ -66,35 +66,35 @@ export default function ChristmasGashapon() {
   };
 
   // Fetch employees from API
-  // useEffect(() => {
-  //   const fetchEmployees = async () => {
-  //     const api = process.env.REACT_APP_API + "/api/v1/getEmployee";
-  //     try {
-  //       const response = await fetch(api, {
-  //         method: "POST",
-  //         headers: { "Content-Type": "application/json" },
-  //       });
-  //       const data = await response.json();
-  //       const validEmployees = data.filter((e) => e.has_lucky_draw);
-  //       setListData(validEmployees);
+  useEffect(() => {
+    const fetchEmployees = async () => {
+      const api = process.env.REACT_APP_API + "/api/v1/getEmployee";
+      try {
+        const response = await fetch(api, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+        });
+        const data = await response.json();
+        const validEmployees = data.filter((e) => e.has_lucky_draw);
+        setListData(validEmployees);
 
-  //       const newBalls = validEmployees.map((emp) => ({
-  //         top: Math.random() * 400,
-  //         left: Math.random() * 400,
-  //         color: getRandomColor(),
-  //         employee: emp,
-  //         velocityX: 0,
-  //         velocityY: 0,
-  //       }));
+        const newBalls = validEmployees.map((emp) => ({
+          top: Math.random() * 400,
+          left: Math.random() * 400,
+          color: getRandomColor(),
+          employee: emp,
+          velocityX: 0,
+          velocityY: 0,
+        }));
 
-  //       setBalls(newBalls);
-  //       setInitialBalls(newBalls.map((ball) => ({ ...ball })));
-  //     } catch (err) {
-  //       console.error("Error fetching employees:", err);
-  //     }
-  //   };
-  //   fetchEmployees();
-  // }, []);
+        setBalls(newBalls);
+        setInitialBalls(newBalls.map((ball) => ({ ...ball })));
+      } catch (err) {
+        console.error("Error fetching employees:", err);
+      }
+    };
+    fetchEmployees();
+  }, []);
 
   // Physics simulation
   useEffect(() => {
@@ -130,15 +130,15 @@ export default function ChristmasGashapon() {
 
   // Send winner email
   const sendWinnerEmail = async (email) => {
-    // const api = process.env.REACT_APP_API + "/api/v1/drawEvent";
+    const api = process.env.REACT_APP_API + "/api/v1/drawEvent";
     try {
-      // const response = await fetch(api, {
-      //   method: "POST",
-      //   headers: { "Content-Type": "application/json" },
-      //   body: JSON.stringify({ email }),
-      // });
-      // const data = await response.json();
-      // console.log("API Response:", data);
+      const response = await fetch(api, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      const data = await response.json();
+      console.log("API Response:", data);
     } catch (err) {
       console.error("Error sending winner:", err);
     }

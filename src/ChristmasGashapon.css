@@ -233,10 +233,10 @@
 /* Winner list (Right side - fixed & fit screen) */
 .winner-sidebar {
   position: fixed;
-  top: 90px;                 /* ใต้ banner */
+  top: 80px;                 /* ใต้ banner */
   right: 15px;
-  width: 10vw;              /* เล็กลงนิด */
-  height: 81vh;              /* สำคัญ: จำกัดความสูง */
+  width: 12vw;              /* เล็กลงนิด */
+  height: 70vh;              /* สำคัญ: จำกัดความสูง */
   max-height: calc(100vh - 120px);
   background: rgba(255, 255, 255, 0.96);
   box-shadow: -2px 0 12px rgba(0,0,0,0.25);
