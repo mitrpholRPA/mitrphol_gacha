@@ -27,7 +27,15 @@ jobs:
         env:
           REACT_APP_API: https://newyearapp2-gyayc8awcyekcfdr.southeastasia-01.azurewebsites.net
 
-      # zip เฉพาะ build folder
+      # 🔍 debug ให้เห็นว่า build มีจริง
+      - name: Verify build output
+        run: |
+          echo "=== root ==="
+          ls -la
+          echo "=== build ==="
+          ls -la build
+
+      # 📦 zip เฉพาะข้างใน build
       - name: Zip build output
         run: |
           cd build
