@@ -15,6 +15,8 @@ export default function ChristmasGashapon() {
   const [isDrawing, setIsDrawing] = useState(false);
   const [snowActive, setSnowActive] = useState(true);
 
+  const [winnerList, setWinnerHistory] = useState([]);
+
   const toggleSidebar = () => setIsSidebarVisible((prev) => !prev);
 
   const getRandomColor = () => {
@@ -57,40 +59,42 @@ export default function ChristmasGashapon() {
 
       setBalls(newBalls);
       setInitialBalls(newBalls.map((ball) => ({ ...ball })));
+      console.log(balls)
+      console.log(initialBalls)
     };
     reader.readAsBinaryString(file);
   };
 
   // Fetch employees from API
-  useEffect(() => {
-    const fetchEmployees = async () => {
-      const api = process.env.REACT_APP_API + "/api/v1/getEmployee";
-      try {
-        const response = await fetch(api, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-        });
-        const data = await response.json();
-        const validEmployees = data.filter((e) => e.has_lucky_draw);
-        setListData(validEmployees);
+  // useEffect(() => {
+  //   const fetchEmployees = async () => {
+  //     const api = process.env.REACT_APP_API + "/api/v1/getEmployee";
+  //     try {
+  //       const response = await fetch(api, {
+  //         method: "POST",
+  //         headers: { "Content-Type": "application/json" },
+  //       });
+  //       const data = await response.json();
+  //       const validEmployees = data.filter((e) => e.has_lucky_draw);
+  //       setListData(validEmployees);
 
-        const newBalls = validEmployees.map((emp) => ({
-          top: Math.random() * 400,
-          left: Math.random() * 400,
-          color: getRandomColor(),
-          employee: emp,
-          velocityX: 0,
-          velocityY: 0,
-        }));
+  //       const newBalls = validEmployees.map((emp) => ({
+  //         top: Math.random() * 400,
+  //         left: Math.random() * 400,
+  //         color: getRandomColor(),
+  //         employee: emp,
+  //         velocityX: 0,
+  //         velocityY: 0,
+  //       }));
 
-        setBalls(newBalls);
-        setInitialBalls(newBalls.map((ball) => ({ ...ball })));
-      } catch (err) {
-        console.error("Error fetching employees:", err);
-      }
-    };
-    fetchEmployees();
-  }, []);
+  //       setBalls(newBalls);
+  //       setInitialBalls(newBalls.map((ball) => ({ ...ball })));
+  //     } catch (err) {
+  //       console.error("Error fetching employees:", err);
+  //     }
+  //   };
+  //   fetchEmployees();
+  // }, []);
 
   // Physics simulation
   useEffect(() => {
@@ -126,15 +130,15 @@ export default function ChristmasGashapon() {
 
   // Send winner email
   const sendWinnerEmail = async (email) => {
-    const api = process.env.REACT_APP_API + "/api/v1/drawEvent";
+    // const api = process.env.REACT_APP_API + "/api/v1/drawEvent";
     try {
-      const response = await fetch(api, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
-      });
-      const data = await response.json();
-      console.log("API Response:", data);
+      // const response = await fetch(api, {
+      //   method: "POST",
+      //   headers: { "Content-Type": "application/json" },
+      //   body: JSON.stringify({ email }),
+      // });
+      // const data = await response.json();
+      // console.log("API Response:", data);
     } catch (err) {
       console.error("Error sending winner:", err);
     }
@@ -142,13 +146,13 @@ export default function ChristmasGashapon() {
 
   // Draw winner
   const drawWinner = () => {
+    
     if (balls.length === 0 || isDrawing) return;
+    // Reset balls to initial positions
+    setBalls(initialBalls.map((ball) => ({ ...ball, velocityX: 0, velocityY: 0 })));
 
     setIsDrawing(true);
     setShaking(true);
-
-    // Reset balls to initial positions
-    setBalls(initialBalls.map((ball) => ({ ...ball, velocityX: 0, velocityY: 0 })));
 
     const index = Math.floor(Math.random() * initialBalls.length);
     const winner = initialBalls[index];
@@ -164,6 +168,10 @@ export default function ChristmasGashapon() {
 
       setTimeout(() => {
         setWinnerIndex(null);
+        setWinnerHistory(prev => [
+          { fullname: winner.employee.fullname },
+          ...prev,
+        ]);
         setShowWinner(false);
         setIsDrawing(false);
       }, 2000);
@@ -192,73 +200,88 @@ export default function ChristmasGashapon() {
 
       {/* Banner */}
       <div className="newyear-banner">🎉 Happy New Year 2026 🎉</div>
+      {/* ===== MAIN STAGE LAYOUT ===== */}
+      <div className="stage-layout">
+        {/* spacer ซ้าย (ทำให้ตู้กลางจริง) */}
+        <div className="left-spacer" />
 
-      <div className="gashapon-wrapper">
-        {/* Decorations */}
-        <div className="decoration" style={{ top: "-1%", right: "30%", fontSize: "50px" }}>🎁</div>
-        <div className="decoration" style={{ top: "-1%", left: "30%", fontSize: "40px" }}>🧧</div>
-        <div className="decoration" style={{ top: "5%", left: "10%", fontSize: "60px" }}>🎄</div>
-        <div className="decoration" style={{ top: "5%", right: "10%", fontSize: "60px" }}>🔔</div>
-        <div className="decoration" style={{ top: "30%", right: "5%", fontSize: "45px" }}>🍾</div>
-        <div className="decoration" style={{ top: "30%", left: "5%", fontSize: "50px" }}>⭐</div>
-        <div className="decoration" style={{ top: "50%", left: "5%", fontSize: "50px" }}>🎉</div>
-        <div className="decoration" style={{ top: "50%", right: "5%", fontSize: "50px" }}>🎆</div>
-        <div className="decoration" style={{ bottom: "20%", left: "10%", fontSize: "50px" }}>⭐</div>
-        <div className="decoration" style={{ bottom: "20%", right: "10%", fontSize: "40px" }}>🍬</div>
-        {/* <div className="decoration" style={{ bottom: "5%", left: "25%", fontSize: "45px" }}>🔔</div>
-        <div className="decoration" style={{ bottom: "5%", right: "25%", fontSize: "50px" }}>🎁</div> */}
+        <div className="gashapon-wrapper">
+          {/* Decorations */}
+          <div className="decoration" style={{ top: "-1%", right: "30%", fontSize: "50px" }}>🎁</div>
+          <div className="decoration" style={{ top: "-1%", left: "30%", fontSize: "40px" }}>🧧</div>
+          <div className="decoration" style={{ top: "5%", left: "10%", fontSize: "60px" }}>🎄</div>
+          <div className="decoration" style={{ top: "5%", right: "10%", fontSize: "60px" }}>🔔</div>
+          <div className="decoration" style={{ top: "30%", right: "5%", fontSize: "45px" }}>🍾</div>
+          <div className="decoration" style={{ top: "30%", left: "5%", fontSize: "50px" }}>⭐</div>
+          <div className="decoration" style={{ top: "50%", left: "5%", fontSize: "50px" }}>🎉</div>
+          <div className="decoration" style={{ top: "50%", right: "5%", fontSize: "50px" }}>🎆</div>
+          <div className="decoration" style={{ bottom: "20%", left: "10%", fontSize: "50px" }}>⭐</div>
+          <div className="decoration" style={{ bottom: "20%", right: "10%", fontSize: "40px" }}>🍬</div>
+          {/* <div className="decoration" style={{ bottom: "5%", left: "25%", fontSize: "45px" }}>🔔</div>
+          <div className="decoration" style={{ bottom: "5%", right: "25%", fontSize: "50px" }}>🎁</div> */}
 
-        {/* Globe & Balls */}
-        <div className={`globe ${shaking ? "shake" : ""}`}>
-          {balls.map((ball, i) => {
-            const isWinner = winnerIndex === i && showWinner;
-            return (
-              <div
-                key={i}
-                className={`ball ${isWinner ? "winner-center" : ""}`}
-                style={{
-                  top: isWinner ? "50%" : ball.top,
-                  left: isWinner ? "50%" : ball.left,
-                  backgroundColor: ball.color,
-                  transform: isWinner ? "translate(-50%, -50%) scale(4)" : "translate(0,0)",
-                  fontSize: isWinner ? "15px" : "12px",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  textAlign: "center",
-                  padding: isWinner ? "20px" : "0",
-                  zIndex: isWinner ? 999 : 5,
-                  width: isWinner ? "200px" : "40px",
-                  height: isWinner ? "200px" : "40px",
-                  borderRadius: "50%",
-                  overflow: "hidden",
-                }}
-              >
-                {isWinner ? ball.employee.fullname : ball.employee.id}
-              </div>
-            );
-          })}
+          {/* Globe & Balls */}
+          <div className={`globe ${shaking ? "shake" : ""}`}>
+            {balls.map((ball, i) => {
+              const isWinner = winnerIndex === i && showWinner;
+              return (
+                <div
+                  key={i}
+                  className={`ball ${isWinner ? "winner-center" : ""}`}
+                  style={{
+                    top: isWinner ? "50%" : ball.top,
+                    left: isWinner ? "50%" : ball.left,
+                    backgroundColor: ball.color,
+                    transform: isWinner ? "translate(-50%, -50%) scale(4)" : "translate(0,0)",
+                    fontSize: isWinner ? "15px" : "12px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    textAlign: "center",
+                    padding: isWinner ? "20px" : "0",
+                    zIndex: isWinner ? 999 : 5,
+                    width: isWinner ? "200px" : "40px",
+                    height: isWinner ? "200px" : "40px",
+                    borderRadius: "50%",
+                    overflow: "hidden",
+                  }}
+                >
+                  {isWinner ? ball.employee.fullname : ball.employee.id}
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="globe-base"></div>
+
+          {/* Draw Button */}
+          <button
+            className="draw-btn"
+            onClick={drawWinner}
+            disabled={balls.length === 0 || isDrawing}
+          >
+            {balls.length === 0 ? "NO BALLS LEFT" : "DRAW WINNER"}
+          </button>
+
+          {/* Winner Display */}
+          {showWinner && winnerIndex !== null && (
+            <p style={{ marginTop: "10px", fontWeight: "bold", fontSize: "20px" }}>
+              Winner: {balls[winnerIndex].employee.fullname}
+            </p>
+          )}
+          <Snowfall active={snowActive}></Snowfall>
         </div>
-
-        <div className="globe-base"></div>
-
-        {/* Draw Button */}
-        <button
-          className="draw-btn"
-          onClick={drawWinner}
-          disabled={balls.length === 0 || isDrawing}
-        >
-          {balls.length === 0 ? "NO BALLS LEFT" : "DRAW WINNER"}
-        </button>
-
-        {/* Winner Display */}
-        {showWinner && winnerIndex !== null && (
-          <p style={{ marginTop: "10px", fontWeight: "bold", fontSize: "20px" }}>
-            Winner: {balls[winnerIndex].employee.fullname}
-          </p>
-        )}
-
-        <Snowfall active={snowActive}></Snowfall>
+      
+        {/* ===== WINNER LIST (ขวา) ===== */}
+        <div className="winner-sidebar">
+          <h4>🏆 Winner List</h4>
+          {winnerList.length === 0 && <p>ยังไม่มีผู้โชคดี</p>}
+          {[...winnerList].reverse().map((w, i) => (
+            <div className="winner-item" key={i}>
+              {i + 1}. {w.fullname}
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );

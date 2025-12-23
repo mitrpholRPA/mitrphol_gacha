@@ -228,3 +228,45 @@
 .open-sidebar:hover { 
   transform: scale(1.05); 
 }
+
+
+/* Winner list (Right side - fixed & fit screen) */
+.winner-sidebar {
+  position: fixed;
+  top: 90px;                 /* ใต้ banner */
+  right: 15px;
+  width: 10vw;              /* เล็กลงนิด */
+  height: 81vh;              /* สำคัญ: จำกัดความสูง */
+  max-height: calc(100vh - 120px);
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: -2px 0 12px rgba(0,0,0,0.25);
+  border-radius: 16px;
+  padding: 12px 10px;
+  overflow-y: auto;          /* scroll เฉพาะกล่อง */
+  z-index: 40;
+}
+
+/* Title */
+.winner-sidebar h4 {
+  margin: 5px 0 10px;
+  font-size: 16px;
+  color: #ff4081;
+  text-align: center;
+  position: sticky;
+  top: 0;
+  background: #fff;
+  padding-bottom: 6px;
+  z-index: 1;
+}
+
+/* Winner item */
+.winner-item {
+  background: linear-gradient(135deg, #ffe6f0, #e3f2fd);
+  margin-bottom: 6px;
+  padding: 6px 8px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 13px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+  line-height: 1.3;
+}
