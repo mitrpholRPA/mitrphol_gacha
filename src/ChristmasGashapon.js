@@ -9,13 +9,13 @@ export default function ChristmasGashapon() {
   const [listData, setListData] = useState([]);
   const [balls, setBalls] = useState([]);
   const [initialBalls, setInitialBalls] = useState([]); // เก็บตำแหน่งเริ่มต้น
-  const [winnerIndex, setWinnerIndex] = useState(null);
   const [showWinner, setShowWinner] = useState(false);
   const [shaking, setShaking] = useState(false);
   const [isDrawing, setIsDrawing] = useState(false);
   const [snowActive, setSnowActive] = useState(true);
-
   const [winnerList, setWinnerHistory] = useState([]);
+  const [indexWinner , setIndexWinner] = useState(1)
+  const [currentWinner, setCurrentWinner] = useState(null);
 
   const toggleSidebar = () => setIsSidebarVisible((prev) => !prev);
 
@@ -75,9 +75,25 @@ export default function ChristmasGashapon() {
           headers: { "Content-Type": "application/json" },
         });
         const data = await response.json();
-        const validEmployees = data.filter((e) => e.has_lucky_draw);
-        setListData(validEmployees);
+        
+        // ✅ FIX: แยกคนที่เคยได้รางวัล sort
+        const winners = data.filter(e => e.has_lucky_draw && e.isreceive);
+        setWinnerHistory(
+          winners
+            .sort((a, b) => new Date(b.receive_time) - new Date(a.receive_time)) // ใหม่ → เก่า
+            .map(w => ({
+              fullname: w.fullname,
+              employee_id: w.employee_id,
+              gift_id: w.gift_id,
+              receive_time: w.receive_time,
+            }))
+        );
 
+        console.log(winners)
+        // ✅ FIX: set valid employee
+        const validEmployees = data.filter((e) => e.has_lucky_draw && e.isreceive === false && e.isluckydraw === false);
+        setListData(validEmployees);
+        console.log(validEmployees)
         const newBalls = validEmployees.map((emp) => ({
           top: Math.random() * 400,
           left: Math.random() * 400,
@@ -135,8 +151,10 @@ export default function ChristmasGashapon() {
       const response = await fetch(api, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({email , indexWinner}),
+
       });
+      console.log({email , indexWinner} )
       const data = await response.json();
       console.log("API Response:", data);
     } catch (err) {
@@ -146,33 +164,39 @@ export default function ChristmasGashapon() {
 
   // Draw winner
   const drawWinner = () => {
-    
     if (balls.length === 0 || isDrawing) return;
     // Reset balls to initial positions
     setBalls(initialBalls.map((ball) => ({ ...ball, velocityX: 0, velocityY: 0 })));
+    const index = Math.floor(Math.random() * balls.length);
+    const winner = balls[index];
 
+    // Hold Show
+    setShowWinner(false);
+    setCurrentWinner(winner)
+
+    // Animation
     setIsDrawing(true);
     setShaking(true);
 
-    const index = Math.floor(Math.random() * initialBalls.length);
-    const winner = initialBalls[index];
-
-    setListData((prev) => prev.filter((_, i) => i !== index));
+    // Remove Data
     setBalls((prev) => prev.filter((_, i) => i !== index));
-
+    setListData((prev) => prev.filter((_, i) => i !== index));
+    setInitialBalls((prev) => prev.filter((_, i) => i !== index));
+    
+    setIndexWinner(prev => prev + 1);
+    console.log("CurrentIndex" + indexWinner)
+    // Update Data to Database
+    sendWinnerEmail(winner.employee.email);
+    
     setTimeout(() => {
       setShaking(false);
-      setWinnerIndex(index);
       setShowWinner(true);
-      sendWinnerEmail(winner.employee.email);
-
       setTimeout(() => {
-        setWinnerIndex(null);
         setWinnerHistory(prev => [
           { fullname: winner.employee.fullname },
           ...prev,
         ]);
-        setShowWinner(false);
+        
         setIsDrawing(false);
       }, 2000);
     }, 3000);
@@ -222,37 +246,57 @@ export default function ChristmasGashapon() {
 
           {/* Globe & Balls */}
           <div className={`globe ${shaking ? "shake" : ""}`}>
-            {balls.map((ball, i) => {
-              const isWinner = winnerIndex === i && showWinner;
-              return (
-                <div
-                  key={i}
-                  className={`ball ${isWinner ? "winner-center" : ""}`}
-                  style={{
-                    top: isWinner ? "50%" : ball.top,
-                    left: isWinner ? "50%" : ball.left,
-                    backgroundColor: ball.color,
-                    transform: isWinner ? "translate(-50%, -50%) scale(4)" : "translate(0,0)",
-                    fontSize: isWinner ? "15px" : "12px",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    textAlign: "center",
-                    padding: isWinner ? "20px" : "0",
-                    zIndex: isWinner ? 999 : 5,
-                    width: isWinner ? "200px" : "40px",
-                    height: isWinner ? "200px" : "40px",
-                    borderRadius: "50%",
-                    overflow: "hidden",
-                  }}
-                >
-                  {isWinner ? ball.employee.fullname : ball.employee.id}
-                </div>
-              );
-            })}
+            {balls.map((ball, i) => (
+              <div
+                key={i}
+                className="ball"
+                style={{
+                  top: ball.top,
+                  left: ball.left,
+                  backgroundColor: ball.color,
+                }}
+              >
+                {ball.employee.id}
+              </div>
+            ))}
+
+            {/* ลูกบอลผู้ชนะ (แยกออกมาเลย) */}
+            {showWinner && currentWinner && (
+              <div
+                className="ball winner-center mega-winner"
+                style={{
+                  top: "50%" ,
+                  left: "50%" ,
+                  backgroundColor:currentWinner.color ,
+                  transform: "translate(-50%, -50%) scale(4)" ,
+                  fontSize: "12px" ,
+                  fontWeight: "100",
+                  textShadow: `
+                    0 0 5px #fff,
+                    0 0 10px #fffa,
+                    0 0 15px #ffea00,
+                    0 0 20px #ffe600,
+                    0 0 30px #ffdd00
+                  `,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  textAlign: "center",
+                  padding:  "2px",
+                  zIndex:  999,
+                  width:  "200px" ,
+                  height:  "200px",
+                  borderRadius: "50%",
+                  overflow: "hidden",
+                }}
+              >
+                {currentWinner.employee.fullname}
+              </div>
+            )}
           </div>
 
-          <div className="globe-base"></div>
+          {/* วงพลัง */}
+          <div className="energy-ring"></div>
 
           {/* Draw Button */}
           <button
@@ -264,11 +308,13 @@ export default function ChristmasGashapon() {
           </button>
 
           {/* Winner Display */}
-          {showWinner && winnerIndex !== null && (
+          {showWinner && currentWinner && (
             <p style={{ marginTop: "10px", fontWeight: "bold", fontSize: "20px" }}>
-              Winner: {balls[winnerIndex].employee.fullname}
+              Winner: {currentWinner.employee.fullname} <br />
+              {currentWinner.employee.department}
             </p>
           )}
+
           <Snowfall active={snowActive}></Snowfall>
         </div>
       
@@ -276,9 +322,9 @@ export default function ChristmasGashapon() {
         <div className="winner-sidebar">
           <h4>🏆 Winner List</h4>
           {winnerList.length === 0 && <p>ยังไม่มีผู้โชคดี</p>}
-          {[...winnerList].reverse().map((w, i) => (
+          {winnerList.map((w, i) => (
             <div className="winner-item" key={i}>
-              {i + 1}. {w.fullname}
+              {winnerList.length - i}. {w.fullname}
             </div>
           ))}
         </div>

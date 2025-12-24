@@ -205,8 +205,6 @@ export default function ChristmasGashapon() {
         <div className="decoration" style={{ top: "50%", right: "5%", fontSize: "50px" }}>🎆</div>
         <div className="decoration" style={{ bottom: "20%", left: "10%", fontSize: "50px" }}>⭐</div>
         <div className="decoration" style={{ bottom: "20%", right: "10%", fontSize: "40px" }}>🍬</div>
-        {/* <div className="decoration" style={{ bottom: "5%", left: "25%", fontSize: "45px" }}>🔔</div>
-        <div className="decoration" style={{ bottom: "5%", right: "25%", fontSize: "50px" }}>🎁</div> */}
 
         {/* Globe & Balls */}
         <div className={`globe ${shaking ? "shake" : ""}`}>
