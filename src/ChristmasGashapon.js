@@ -198,8 +198,8 @@ export default function ChristmasGashapon() {
         ]);
         
         setIsDrawing(false);
-      }, 2000);
-    }, 3000);
+      }, 1500);
+    }, 2000);
   };
 
   return (
