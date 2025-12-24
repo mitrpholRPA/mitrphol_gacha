@@ -199,7 +199,7 @@ export default function ChristmasGashapon() {
         
         setIsDrawing(false);
       }, 1500);
-    }, 2000);
+    }, 3000);
   };
 
   return (
@@ -300,11 +300,15 @@ export default function ChristmasGashapon() {
 
           {/* Draw Button */}
           <button
-            className="draw-btn"
+            className={`draw-btn ${isDrawing ? "disabled" : ""}`}
             onClick={drawWinner}
             disabled={balls.length === 0 || isDrawing}
           >
-            {balls.length === 0 ? "NO BALLS LEFT" : "DRAW WINNER"}
+            {balls.length === 0
+              ? "NO BALLS LEFT"
+              : isDrawing
+              ? "DRAWING..."
+              : "DRAW WINNER"}
           </button>
 
           {/* Winner Display */}
