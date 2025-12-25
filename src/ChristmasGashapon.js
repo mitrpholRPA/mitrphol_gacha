@@ -115,44 +115,51 @@ export default function ChristmasGashapon() {
   }, []);
 
   // Physics simulation
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setBalls((prev) =>
-        prev.map((ball) => {
-          let velocityY = ball.velocityY + 0.5;
-          let velocityX = ball.velocityX;
-          let top = ball.top + velocityY;
-          let left = ball.left + velocityX;
+  // useEffect(() => {
+  //   const interval = setInterval(() => {
+  //     setBalls((prev) =>
+  //       prev.map((ball) => {
+  //         let velocityY = ball.velocityY + 0.5;
+  //         let velocityX = ball.velocityX;
+  //         let top = ball.top + velocityY;
+  //         let left = ball.left + velocityX;
 
-          if (top > 440) {
-            top = 440;
-            velocityY *= -0.5;
-          }
-          if (left < 0) {
-            left = 0;
-            velocityX *= -1;
-          }
-          if (left > 440) {
-            left = 440;
-            velocityX *= -1;
-          }
+  //         if (top > 440) {
+  //           top = 440;
+  //           velocityY *= -0.5;
+  //         }
+  //         if (left < 0) {
+  //           left = 0;
+  //           velocityX *= -1;
+  //         }
+  //         if (left > 440) {
+  //           left = 440;
+  //           velocityX *= -1;
+  //         }
 
-          return { ...ball, top, left, velocityY, velocityX };
-        })
-      );
-    }, 16);
-    setSnowActive(true);
-    return () => clearInterval(interval);
-  }, []);
+  //         return { ...ball, top, left, velocityY, velocityX };
+  //       })
+  //     );
+  //   }, 16);
+  //   setSnowActive(true);
+  //   return () => clearInterval(interval);
+  // }, []);
 
-
-  // Physics simulation
+// ===== ADD: impulse shake (ไม่ reset position) =====
+const impulseShake = () => {
+  setBalls(prev =>
+    prev.map(ball => ({
+      ...ball,
+      velocityX: (Math.random() - 0.5) * 12,
+      velocityY: -Math.random() * 14,
+    }))
+  );
+};
+// Physics simulation (OPTIMIZED)
 useEffect(() => {
-  // ===== OPTIMIZE: ลด fps บน mobile =====
-  const fps = isMobile ? 32 : 16; // mobile ~30fps, desktop ~60fps
+  const fps = isMobile ? 32 : 16;
 
   const interval = setInterval(() => {
-    // ===== OPTIMIZE: ไม่คำนวณถ้ากำลัง draw =====
     if (isDrawing) return;
 
     setBalls((prev) =>
@@ -182,7 +189,7 @@ useEffect(() => {
 
   setSnowActive(true);
   return () => clearInterval(interval);
-}, [isDrawing]); // 👈 ADD dependency
+}, [isDrawing]);
 
   // Send winner email
   const sendWinnerEmail = async (email) => {
@@ -203,43 +210,92 @@ useEffect(() => {
   };
 
   // Draw winner
-  const drawWinner = () => {
-    if (balls.length === 0 || isDrawing) return;
-    // Reset balls to initial positions
-    setBalls(initialBalls.map((ball) => ({ ...ball, velocityX: 0, velocityY: 0 })));
-    const index = Math.floor(Math.random() * balls.length);
-    const winner = balls[index];
+  // const drawWinner = () => {
+  //   if (balls.length === 0 || isDrawing) return;
+  //   // Reset balls to initial positions
+  //   setBalls(initialBalls.map((ball) => ({ ...ball, velocityX: 0, velocityY: 0 })));
+  //   const index = Math.floor(Math.random() * balls.length);
+  //   const winner = balls[index];
 
-    // Hold Show
-    setShowWinner(false);
-    setCurrentWinner(winner)
+  //   // Hold Show
+  //   setShowWinner(false);
+  //   setCurrentWinner(winner)
 
-    // Animation
-    setIsDrawing(true);
-    setShaking(true);
+  //   // Animation
+  //   setIsDrawing(true);
+  //   setShaking(true);
 
-    // Remove Data
-    setBalls((prev) => prev.filter((_, i) => i !== index));
-    setListData((prev) => prev.filter((_, i) => i !== index));
-    setInitialBalls((prev) => prev.filter((_, i) => i !== index));
+  //   // Remove Data
+  //   setBalls((prev) => prev.filter((_, i) => i !== index));
+  //   setListData((prev) => prev.filter((_, i) => i !== index));
+  //   setInitialBalls((prev) => prev.filter((_, i) => i !== index));
     
-    setIndexWinner(prev => prev + 1);
-    // Update Data to Database
-    sendWinnerEmail(winner.employee.email);
+  //   setIndexWinner(prev => prev + 1);
+  //   // Update Data to Database
+  //   sendWinnerEmail(winner.employee.email);
     
-    setTimeout(() => {
-      setShaking(false);
-      setShowWinner(true);
-      setTimeout(() => {
-        setWinnerHistory(prev => [
-          { fullname: winner.employee.fullname },
-          ...prev,
-        ]);
+  //   setTimeout(() => {
+  //     setShaking(false);
+  //     setShowWinner(true);
+  //     setTimeout(() => {
+  //       setWinnerHistory(prev => [
+  //         { fullname: winner.employee.fullname },
+  //         ...prev,
+  //       ]);
         
-        setIsDrawing(false);
-      }, 1500);
-    }, 3000);
-  };
+  //       setIsDrawing(false);
+  //     }, 1500);
+  //   }, 3000);
+  // };
+
+  const drawWinner = () => {
+  if (balls.length === 0 || isDrawing) return;
+
+  // ❌ OLD: reset กลับจุดเริ่ม
+  /*
+  setBalls(
+    initialBalls.map((ball) => ({
+      ...ball,
+      velocityX: 0,
+      velocityY: 0,
+    }))
+  );
+  */
+
+  // ✅ NEW: เขย่าแบบเด้งจากตำแหน่งปัจจุบัน
+  impulseShake();
+
+  const index = Math.floor(Math.random() * balls.length);
+  const winner = balls[index];
+
+  setShowWinner(false);
+  setCurrentWinner(winner);
+
+  setIsDrawing(true);
+  setShaking(true);
+
+  // Remove Data
+  setBalls((prev) => prev.filter((_, i) => i !== index));
+  setListData((prev) => prev.filter((_, i) => i !== index));
+  setInitialBalls((prev) => prev.filter((_, i) => i !== index));
+
+  setIndexWinner((prev) => prev + 1);
+  sendWinnerEmail(winner.employee.email);
+
+  setTimeout(() => {
+    setShaking(false);
+    setShowWinner(true);
+
+    setTimeout(() => {
+      setWinnerHistory((prev) => [
+        { fullname: winner.employee.fullname },
+        ...prev,
+      ]);
+      setIsDrawing(false);
+    }, 1500);
+  }, 3000);
+};
+
 
   return (
     <div className="scene-wrapper">
@@ -360,7 +416,8 @@ useEffect(() => {
             </p>
           )}
 
-          <Snowfall active={snowActive}></Snowfall>
+          {/* ===== OPTIMIZE: ปิด Snowfall ตอนกำลัง draw ===== */}
+        {!isMobile && !isDrawing && <Snowfall active={snowActive} />} 
         </div>
       
         {/* ===== WINNER LIST (ขวา) ===== */}
