@@ -4,6 +4,8 @@ import "./ChristmasGashapon.css";
 import * as XLSX from "xlsx";
 
 export default function ChristmasGashapon() {
+  const isMobile = /iPhone|iPad|Android/i.test(navigator.userAgent);
+  const MAX_BALLS = isMobile ? 120 : 300;
   const [isSidebarVisible, setIsSidebarVisible] = useState(false);
   const [file, setFile] = useState(null);
   const [listData, setListData] = useState([]);
@@ -59,8 +61,6 @@ export default function ChristmasGashapon() {
 
       setBalls(newBalls);
       setInitialBalls(newBalls.map((ball) => ({ ...ball })));
-      console.log(balls)
-      console.log(initialBalls)
     };
     reader.readAsBinaryString(file);
   };
@@ -89,18 +89,20 @@ export default function ChristmasGashapon() {
             }))
         );
 
-        console.log(winners)
+        // console.log(winners)
         // ✅ FIX: set valid employee
         const validEmployees = data.filter((e) => e.has_lucky_draw && e.isreceive === false && e.isluckydraw === false);
         setListData(validEmployees);
-        console.log(validEmployees)
-        const newBalls = validEmployees.map((emp) => ({
-          top: Math.random() * 400,
-          left: Math.random() * 400,
-          color: getRandomColor(),
-          employee: emp,
-          velocityX: 0,
-          velocityY: 0,
+        // console.log(validEmployees)
+        const newBalls = validEmployees
+          .slice(0, MAX_BALLS) // 👈 ADD
+          .map((emp) => ({
+            top: Math.random() * 400,
+            left: Math.random() * 400,
+            color: getRandomColor(),
+            employee: emp,
+            velocityX: 0,
+            velocityY: 0,
         }));
 
         setBalls(newBalls);
@@ -139,10 +141,48 @@ export default function ChristmasGashapon() {
         })
       );
     }, 16);
-
     setSnowActive(true);
     return () => clearInterval(interval);
   }, []);
+
+
+  // Physics simulation
+useEffect(() => {
+  // ===== OPTIMIZE: ลด fps บน mobile =====
+  const fps = isMobile ? 32 : 16; // mobile ~30fps, desktop ~60fps
+
+  const interval = setInterval(() => {
+    // ===== OPTIMIZE: ไม่คำนวณถ้ากำลัง draw =====
+    if (isDrawing) return;
+
+    setBalls((prev) =>
+      prev.map((ball) => {
+        let velocityY = ball.velocityY + 0.5;
+        let velocityX = ball.velocityX;
+        let top = ball.top + velocityY;
+        let left = ball.left + velocityX;
+
+        if (top > 440) {
+          top = 440;
+          velocityY *= -0.5;
+        }
+        if (left < 0) {
+          left = 0;
+          velocityX *= -1;
+        }
+        if (left > 440) {
+          left = 440;
+          velocityX *= -1;
+        }
+
+        return { ...ball, top, left, velocityY, velocityX };
+      })
+    );
+  }, fps);
+
+  setSnowActive(true);
+  return () => clearInterval(interval);
+}, [isDrawing]); // 👈 ADD dependency
 
   // Send winner email
   const sendWinnerEmail = async (email) => {
@@ -154,9 +194,9 @@ export default function ChristmasGashapon() {
         body: JSON.stringify({email , indexWinner}),
 
       });
-      console.log({email , indexWinner} )
+      // console.log({email , indexWinner} )
       const data = await response.json();
-      console.log("API Response:", data);
+      // console.log("API Response:", data);
     } catch (err) {
       console.error("Error sending winner:", err);
     }
@@ -184,7 +224,6 @@ export default function ChristmasGashapon() {
     setInitialBalls((prev) => prev.filter((_, i) => i !== index));
     
     setIndexWinner(prev => prev + 1);
-    console.log("CurrentIndex" + indexWinner)
     // Update Data to Database
     sendWinnerEmail(winner.employee.email);
     
@@ -271,13 +310,15 @@ export default function ChristmasGashapon() {
                   transform: "translate(-50%, -50%) scale(4)" ,
                   fontSize: "12px" ,
                   fontWeight: "100",
-                  textShadow: `
-                    0 0 5px #fff,
-                    0 0 10px #fffa,
-                    0 0 15px #ffea00,
-                    0 0 20px #ffe600,
-                    0 0 30px #ffdd00
-                  `,
+                  textShadow: isMobile
+                        ? "0 0 8px #ffe600"
+                        : `
+                          0 0 5px #fff,
+                          0 0 10px #fffa,
+                          0 0 15px #ffea00,
+                          0 0 20px #ffe600,
+                          0 0 30px #ffdd00
+                        `,
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
